@@ -106,14 +106,17 @@ pub struct Args {
 }
 
 /// check that a file name corresponds to a non empty file:
-pub fn validate_non_empty_file(in_file: String) -> anyhow::Result<()> {
-    if let Ok(metadata) = std::fs::metadata(in_file.clone()) {
+pub fn validate_non_empty_file<P>(in_file: P) -> anyhow::Result<()>
+where
+    P: std::convert::AsRef<std::path::Path> + std::fmt::Display,
+{
+    if let Ok(metadata) = in_file.as_ref().metadata() {
         // Check if the file exists
-        if !metadata.is_file() {
-            anyhow::bail!("{:#} exists, but it's not a file.", in_file)
+        if metadata.is_file() {
+            anyhow::bail!("{} exists, but it's not a file.", in_file)
         }
     } else {
-        anyhow::bail!("{:#} is not a file.", in_file)
+        anyhow::bail!("{} is not a file.", in_file)
     }
 
     Ok(())
