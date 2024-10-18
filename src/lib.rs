@@ -175,10 +175,10 @@ pub fn back_to_multiple_sequences(
         // if output_mapping_positions is true, we output the kmers with their count and mapping positions
         for (in_f, out_f) in input_files.iter().zip(output_files.iter()) {
             count::kmers_in_fasta_file_par::<_, matched_sequences::MatchedSequencePositional>(
-                in_f.to_string(),
+                in_f.display().to_string(),
                 &kmer_set,
                 kmer_size,
-                out_f.clone().to_string(),
+                out_f.display().to_string(),
                 min_threshold,
                 max_threshold,
                 stranded,
@@ -187,17 +187,17 @@ pub fn back_to_multiple_sequences(
             )?;
             println!(
             "Filtered sequences from {} with exact kmer count and mapping positions are in files specified at {}",
-            in_f, out_f
+            in_f.display(), out_f.display()
         );
         }
     } else {
         // if output_mapping_positions is false, we output the kmers with their count
         for (in_f, out_f) in input_files.iter().zip(output_files.iter()) {
             count::kmers_in_fasta_file_par::<_, matched_sequences::MachedCount>(
-                in_f.to_string(),
+                in_f.display().to_string(),
                 &kmer_set,
                 kmer_size,
-                out_f.clone().to_string(),
+                out_f.display().to_string(),
                 min_threshold,
                 max_threshold,
                 stranded,
@@ -206,7 +206,8 @@ pub fn back_to_multiple_sequences(
             )?;
             println!(
                 "Filtered sequences from {} with exact kmer count are in files specified at {}",
-                in_f, out_f
+                in_f.display(),
+                out_f.display()
             );
         }
     }
