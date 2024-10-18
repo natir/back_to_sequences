@@ -35,11 +35,11 @@ pub fn rev_comp(seq: &mut [u8]) {
 /// for each sequence of a given fasta file, count the number of indexed kmers it contains
 /// and output the sequence if its ratio of indexed kmers is in ]min_threshold, max_threshold]
 #[allow(clippy::too_many_arguments)]
-pub fn kmers_in_fasta_file_par<T, D>(
-    file_name: String,
+pub fn kmers_in_fasta_file_par<T, D, P>(
+    file_name: Option<P>,
     kmer_set: &HashMap<Vec<u8>, T>,
     kmer_size: usize,
-    out_fasta: String,
+    out_fasta: P,
     min_threshold: f32,
     max_threshold: f32,
     stranded: bool,
@@ -49,6 +49,7 @@ pub fn kmers_in_fasta_file_par<T, D>(
 where
     T: KmerCounter,
     D: MatchedSequence + Send + 'static,
+    P: std::convert::AsRef<std::path::Path> + std::marker::Send + 'static,
 {
     const CHUNK_SIZE: usize = 32; // number of records
     const INPUT_CHANNEL_SIZE: usize = 8; // in units of CHUNK_SIZE records
@@ -92,10 +93,10 @@ where
     };
 
     let reader_thread = std::thread::spawn(move || -> anyhow::Result<()> {
-        let mut reader = if file_name.is_empty() {
-            initialize_stdin_reader(stdin().lock()).unwrap()
+        let mut reader = if let Some(path) = file_name {
+            initialize_reader(path)?
         } else {
-            initialize_reader(&file_name).unwrap()
+            initialize_stdin_reader(stdin().lock())?
         };
 
         let mut read_id = 0;
@@ -112,10 +113,10 @@ where
                 return Ok(());
             }
         }
-        unreachable!()
+        anyhow::bail!("reach end of reader_thread")
     });
 
-    let writer_thread = std::thread::spawn(move || -> io::Result<_> {
+    let writer_thread = std::thread::spawn(move || -> anyhow::Result<()> {
         // buffer for reordering the output (because Rayon::iter::ParallelBridge() does not
         // preserve the original order of the items)
         let mut buffer = HashMap::<usize, Vec<_>>::new();
@@ -141,7 +142,7 @@ where
             };
             records.into_iter().try_for_each(&mut output_record)?;
         }
-        unreachable!()
+        anyhow::bail!("reach end of writer_thread")
     });
 
     input_rx

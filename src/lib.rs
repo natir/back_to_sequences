@@ -58,8 +58,16 @@ pub fn back_to_sequences<T: KmerCounter>(
         // if an output file is provided, we output the sequences that contain the kmers
         if output_mapping_positions {
             // if output_mapping_positions is true, we output the kmers with their count and mapping positions
-            count::kmers_in_fasta_file_par::<_, matched_sequences::MatchedSequencePositional>(
-                in_fasta_reads,
+            count::kmers_in_fasta_file_par::<
+                _,
+                matched_sequences::MatchedSequencePositional,
+                String,
+            >(
+                if in_fasta_reads.is_empty() {
+                    None
+                } else {
+                    Some(in_fasta_reads)
+                },
                 &kmer_set,
                 kmer_size,
                 out_fasta_reads.clone(),
@@ -75,8 +83,12 @@ pub fn back_to_sequences<T: KmerCounter>(
             );
         } else {
             // if output_mapping_positions is false, we output the kmers with their count
-            count::kmers_in_fasta_file_par::<_, matched_sequences::MachedCount>(
-                in_fasta_reads,
+            count::kmers_in_fasta_file_par::<_, matched_sequences::MachedCount, String>(
+                if in_fasta_reads.is_empty() {
+                    None
+                } else {
+                    Some(in_fasta_reads)
+                },
                 &kmer_set,
                 kmer_size,
                 out_fasta_reads.clone(),
@@ -174,8 +186,12 @@ pub fn back_to_multiple_sequences(
     if output_mapping_positions {
         // if output_mapping_positions is true, we output the kmers with their count and mapping positions
         for (in_f, out_f) in input_files.iter().zip(output_files.iter()) {
-            count::kmers_in_fasta_file_par::<_, matched_sequences::MatchedSequencePositional>(
-                in_f.display().to_string(),
+            count::kmers_in_fasta_file_par::<
+                _,
+                matched_sequences::MatchedSequencePositional,
+                String,
+            >(
+                Some(in_f.display().to_string()),
                 &kmer_set,
                 kmer_size,
                 out_f.display().to_string(),
@@ -193,8 +209,8 @@ pub fn back_to_multiple_sequences(
     } else {
         // if output_mapping_positions is false, we output the kmers with their count
         for (in_f, out_f) in input_files.iter().zip(output_files.iter()) {
-            count::kmers_in_fasta_file_par::<_, matched_sequences::MachedCount>(
-                in_f.display().to_string(),
+            count::kmers_in_fasta_file_par::<_, matched_sequences::MachedCount, String>(
+                Some(in_f.display().to_string()),
                 &kmer_set,
                 kmer_size,
                 out_f.display().to_string(),
