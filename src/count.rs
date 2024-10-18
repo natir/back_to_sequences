@@ -179,8 +179,8 @@ where
 }
 
 /// for each sequence of a given fasta file, count the number of indexed kmers it contains
-pub fn only_kmers_in_fasta_file_par<T, D>(
-    file_name: String,
+pub fn only_kmers_in_fasta_file_par<T, D, P>(
+    file_name: Option<P>,
     kmer_set: &HashMap<Vec<u8>, T>,
     kmer_size: usize,
     stranded: bool,
@@ -189,6 +189,7 @@ pub fn only_kmers_in_fasta_file_par<T, D>(
 where
     T: KmerCounter,
     D: MatchedSequence + Send + 'static,
+    P: std::convert::AsRef<std::path::Path> + std::marker::Send + 'static,
 {
     const CHUNK_SIZE: usize = 32; // number of records
     const INPUT_CHANNEL_SIZE: usize = 8; // in units of CHUNK_SIZE records
@@ -203,10 +204,10 @@ where
     let (_output_tx, _output_rx) = std::sync::mpsc::sync_channel::<Chunk<D>>(OUTPUT_CHANNEL_SIZE);
 
     let reader_thread = std::thread::spawn(move || -> anyhow::Result<()> {
-        let mut reader = if file_name.is_empty() {
-            initialize_stdin_reader(stdin().lock()).unwrap()
+        let mut reader = if let Some(path) = file_name {
+            initialize_reader(path)?
         } else {
-            initialize_reader(&file_name).unwrap()
+            initialize_stdin_reader(stdin().lock())?
         };
 
         let mut read_id = 0;
@@ -224,7 +225,7 @@ where
                 return Ok(());
             }
         }
-        unreachable!()
+        anyhow::bail!("reach end of reader_thread")
     });
 
     input_rx

@@ -106,8 +106,12 @@ pub fn back_to_sequences<T: KmerCounter>(
     } else {
         // if no output file is provided, only the kmers with their count is output
         println!("No output file provided, only the kmers with their count is output");
-        count::only_kmers_in_fasta_file_par::<_, matched_sequences::MachedCount>(
-            in_fasta_reads,
+        count::only_kmers_in_fasta_file_par::<_, matched_sequences::MachedCount, String>(
+            if in_fasta_reads.is_empty() {
+                None
+            } else {
+                Some(in_fasta_reads)
+            },
             &kmer_set,
             kmer_size,
             stranded,
